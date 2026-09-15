@@ -1,0 +1,151 @@
+openapi: 3.1.0
+info:
+  title: Aegira Experiments API
+  version: 0.1.0
+  description: Challenger shadow/limited traffic with pre-agreed promotion criteria (BR-2).
+  x-domain: exp
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Experiments
+paths:
+  /v1/experiments:
+    get:
+      operationId: listChallengerExperiments
+      tags: [Experiments]
+      x-repository: ChallengerExperiment
+      x-dynamodb:
+        entityType: CHALLENGER_EXPERIMENT
+        pkPatternTemplate: "EXP#${experimentId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+        filterFields: [status]
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Experiments
+          content:
+            application/json:
+              schema:
+                $ref: ./experiments.schemas.yaml#/components/schemas/ChallengerExperimentListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createChallengerExperiment
+      tags: [Experiments]
+      x-repository: ChallengerExperiment
+      x-dynamodb:
+        entityType: CHALLENGER_EXPERIMENT
+        pkPatternTemplate: "EXP#${experimentId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./experiments.schemas.yaml#/components/schemas/ChallengerExperimentCreate
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ./experiments.schemas.yaml#/components/schemas/ChallengerExperimentResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/experiments/{experimentId}:
+    get:
+      operationId: getChallengerExperiment
+      tags: [Experiments]
+      x-repository: ChallengerExperiment
+      x-dynamodb:
+        entityType: CHALLENGER_EXPERIMENT
+        pkPatternTemplate: "EXP#${experimentId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            $ref: ./experiments.schemas.yaml#/components/schemas/ExperimentId
+      responses:
+        '200':
+          description: Experiment
+          content:
+            application/json:
+              schema:
+                $ref: ./experiments.schemas.yaml#/components/schemas/ChallengerExperimentResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/experiments/{experimentId}/abort:
+    post:
+      operationId: abortChallengerExperiment
+      tags: [Experiments]
+      x-repository: ChallengerExperiment
+      x-dynamodb:
+        entityType: CHALLENGER_EXPERIMENT
+        pkPatternTemplate: "EXP#${experimentId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            $ref: ./experiments.schemas.yaml#/components/schemas/ExperimentId
+      responses:
+        '200':
+          description: Aborted
+          content:
+            application/json:
+              schema:
+                $ref: ./experiments.schemas.yaml#/components/schemas/ChallengerExperimentResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

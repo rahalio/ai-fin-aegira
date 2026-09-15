@@ -1,0 +1,534 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const createAmlHandoff_Body = z
+  .object({
+    caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+    reasonCode: z.string(),
+    note: z.string().optional(),
+  })
+  .passthrough();
+const CaseId = z.string();
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const HandoffId = z.string();
+const AmlHandoff = z
+  .object({
+    handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+    caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+    reasonCode: z.string(),
+    status: z.enum(['submitted', 'accepted', 'rejected']),
+    note: z.string().optional(),
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const AmlHandoffListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+          caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+          reasonCode: z.string(),
+          status: z.enum(['submitted', 'accepted', 'rejected']),
+          note: z.string().optional(),
+          createdAt: z.string().datetime({ offset: true }),
+          updatedAt: z.string().datetime({ offset: true }).optional(),
+        })
+        .passthrough()
+    ),
+    nextCursor: z.string().optional(),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const AmlHandoffListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+              caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+              reasonCode: z.string(),
+              status: z.enum(['submitted', 'accepted', 'rejected']),
+              note: z.string().optional(),
+              createdAt: z.string().datetime({ offset: true }),
+              updatedAt: z.string().datetime({ offset: true }).optional(),
+            })
+            .passthrough()
+        ),
+        nextCursor: z.string().optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const AmlHandoffCreate = z
+  .object({
+    caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+    reasonCode: z.string(),
+    note: z.string().optional(),
+  })
+  .passthrough();
+const AmlHandoffResponse = z
+  .object({
+    data: z
+      .object({
+        handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+        caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+        reasonCode: z.string(),
+        status: z.enum(['submitted', 'accepted', 'rejected']),
+        note: z.string().optional(),
+        createdAt: z.string().datetime({ offset: true }),
+        updatedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const AmlHandoffReject = z.object({ note: z.string() }).partial().passthrough();
+
+export const schemas: any = {
+  createAmlHandoff_Body,
+  CaseId,
+  Problem,
+  HandoffId,
+  AmlHandoff,
+  AmlHandoffListData,
+  ResponseMeta,
+  AmlHandoffListResponse,
+  AmlHandoffCreate,
+  AmlHandoffResponse,
+  AmlHandoffReject,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/aml-handoffs',
+    alias: 'listAmlHandoffs',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: 'caseId',
+        type: 'Query',
+        schema: z
+          .string()
+          .regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  reasonCode: z.string(),
+                  status: z.enum(['submitted', 'accepted', 'rejected']),
+                  note: z.string().optional(),
+                  createdAt: z.string().datetime({ offset: true }),
+                  updatedAt: z.string().datetime({ offset: true }).optional(),
+                })
+                .passthrough()
+            ),
+            nextCursor: z.string().optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/aml-handoffs',
+    alias: 'createAmlHandoff',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: createAmlHandoff_Body,
+      },
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+            caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+            reasonCode: z.string(),
+            status: z.enum(['submitted', 'accepted', 'rejected']),
+            note: z.string().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Malformed request`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 409,
+        description: `Idempotency key reuse with different body, or state conflict`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/aml-handoffs/:handoffId',
+    alias: 'getAmlHandoff',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'handoffId',
+        type: 'Path',
+        schema: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+            caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+            reasonCode: z.string(),
+            status: z.enum(['submitted', 'accepted', 'rejected']),
+            note: z.string().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/aml-handoffs/:handoffId/accept',
+    alias: 'acceptAmlHandoff',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+      {
+        name: 'handoffId',
+        type: 'Path',
+        schema: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+            caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+            reasonCode: z.string(),
+            status: z.enum(['submitted', 'accepted', 'rejected']),
+            note: z.string().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/aml-handoffs/:handoffId/reject',
+    alias: 'rejectAmlHandoff',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: z.object({ note: z.string() }).partial().passthrough(),
+      },
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+      {
+        name: 'handoffId',
+        type: 'Path',
+        schema: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            handoffId: z.string().regex(/^hnd_[0-9A-HJKMNP-TV-Z]{26}$/),
+            caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+            reasonCode: z.string(),
+            status: z.enum(['submitted', 'accepted', 'rejected']),
+            note: z.string().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

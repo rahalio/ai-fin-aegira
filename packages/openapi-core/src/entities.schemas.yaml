@@ -1,0 +1,90 @@
+openapi: 3.1.0
+info:
+  title: Aegira entity schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    CaseId:
+      type: string
+      pattern: '^cse_[0-9A-HJKMNP-TV-Z]{26}$'
+    EntityLinkId:
+      type: string
+      pattern: '^ent_[0-9A-HJKMNP-TV-Z]{26}$'
+    EntityType:
+      type: string
+      enum: [device, payee, merchant]
+    EntityLink:
+      type: object
+      required:
+        - entityLinkId
+        - caseId
+        - entityType
+        - entityRef
+        - createdAt
+      properties:
+        entityLinkId:
+          $ref: '#/components/schemas/EntityLinkId'
+        caseId:
+          $ref: '#/components/schemas/CaseId'
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        entityRef:
+          type: string
+          description: Masked/tokenised identifier — not raw PII.
+        linkedCaseIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseId'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    EntityLinkListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityLink'
+        nextCursor:
+          type: string
+    EntityLinkListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/EntityLinkListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    EntityHop:
+      type: object
+      required: [entityLinkId, remainingHops, exhausted]
+      properties:
+        entityLinkId:
+          $ref: '#/components/schemas/EntityLinkId'
+        remainingHops:
+          type: integer
+        exhausted:
+          type: boolean
+        linkedCaseIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseId'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    EntityHopResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/EntityHop'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

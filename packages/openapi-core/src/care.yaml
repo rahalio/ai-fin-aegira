@@ -1,0 +1,134 @@
+openapi: 3.1.0
+info:
+  title: Aegira Care API
+  version: 0.1.0
+  description: Care-safe lock/payment status without model internals (BR-11).
+  x-domain: car
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Care
+paths:
+  /v1/care/status:
+    get:
+      operationId: getCareStatus
+      tags: [Care]
+      x-repository: CareStatus
+      x-dynamodb:
+        entityType: CARE_STATUS
+        pkPatternTemplate: "CARE#${careStatusId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: paymentRef
+          in: query
+          schema:
+            type: string
+        - name: maskedPan
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bounded status
+          content:
+            application/json:
+              schema:
+                $ref: ./care.schemas.yaml#/components/schemas/CareStatusResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/care/status/{careStatusId}/callback:
+    post:
+      operationId: requestCareCallback
+      tags: [Care]
+      x-repository: CareStatus
+      x-dynamodb:
+        entityType: CARE_STATUS
+        pkPatternTemplate: "CARE#${careStatusId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: careStatusId
+          in: path
+          required: true
+          schema:
+            $ref: ./care.schemas.yaml#/components/schemas/CareStatusId
+      responses:
+        '200':
+          description: Callback requested
+          content:
+            application/json:
+              schema:
+                $ref: ./care.schemas.yaml#/components/schemas/CareStatusResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/care/status/{careStatusId}/call-outcome:
+    post:
+      operationId: noteCareCallOutcome
+      tags: [Care]
+      x-repository: CareStatus
+      x-dynamodb:
+        entityType: CARE_STATUS
+        pkPatternTemplate: "CARE#${careStatusId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: careStatusId
+          in: path
+          required: true
+          schema:
+            $ref: ./care.schemas.yaml#/components/schemas/CareStatusId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./care.schemas.yaml#/components/schemas/CareCallOutcome
+      responses:
+        '200':
+          description: Note recorded
+          content:
+            application/json:
+              schema:
+                $ref: ./care.schemas.yaml#/components/schemas/CareStatusResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

@@ -1,0 +1,196 @@
+openapi: 3.1.0
+info:
+  title: Aegira AML Handoffs API
+  version: 0.1.0
+  description: Controlled AML escalation with reason codes (BR-9).
+  x-domain: hnd
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Handoffs
+paths:
+  /v1/aml-handoffs:
+    get:
+      operationId: listAmlHandoffs
+      tags: [Handoffs]
+      x-repository: AmlHandoff
+      x-dynamodb:
+        entityType: AML_HANDOFF
+        pkPatternTemplate: "HANDOFF#${handoffId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+        filterFields: [status, caseId]
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: caseId
+          in: query
+          schema:
+            $ref: ./handoffs.schemas.yaml#/components/schemas/CaseId
+      responses:
+        '200':
+          description: Handoffs
+          content:
+            application/json:
+              schema:
+                $ref: ./handoffs.schemas.yaml#/components/schemas/AmlHandoffListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createAmlHandoff
+      tags: [Handoffs]
+      x-repository: AmlHandoff
+      x-dynamodb:
+        entityType: AML_HANDOFF
+        pkPatternTemplate: "HANDOFF#${handoffId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./handoffs.schemas.yaml#/components/schemas/AmlHandoffCreate
+      responses:
+        '201':
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: ./handoffs.schemas.yaml#/components/schemas/AmlHandoffResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '409':
+          $ref: ./common/responses.yaml#/components/responses/Conflict
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/aml-handoffs/{handoffId}:
+    get:
+      operationId: getAmlHandoff
+      tags: [Handoffs]
+      x-repository: AmlHandoff
+      x-dynamodb:
+        entityType: AML_HANDOFF
+        pkPatternTemplate: "HANDOFF#${handoffId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: handoffId
+          in: path
+          required: true
+          schema:
+            $ref: ./handoffs.schemas.yaml#/components/schemas/HandoffId
+      responses:
+        '200':
+          description: Receipt
+          content:
+            application/json:
+              schema:
+                $ref: ./handoffs.schemas.yaml#/components/schemas/AmlHandoffResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/aml-handoffs/{handoffId}/accept:
+    post:
+      operationId: acceptAmlHandoff
+      tags: [Handoffs]
+      x-repository: AmlHandoff
+      x-dynamodb:
+        entityType: AML_HANDOFF
+        pkPatternTemplate: "HANDOFF#${handoffId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: handoffId
+          in: path
+          required: true
+          schema:
+            $ref: ./handoffs.schemas.yaml#/components/schemas/HandoffId
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: ./handoffs.schemas.yaml#/components/schemas/AmlHandoffResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/aml-handoffs/{handoffId}/reject:
+    post:
+      operationId: rejectAmlHandoff
+      tags: [Handoffs]
+      x-repository: AmlHandoff
+      x-dynamodb:
+        entityType: AML_HANDOFF
+        pkPatternTemplate: "HANDOFF#${handoffId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: handoffId
+          in: path
+          required: true
+          schema:
+            $ref: ./handoffs.schemas.yaml#/components/schemas/HandoffId
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./handoffs.schemas.yaml#/components/schemas/AmlHandoffReject
+      responses:
+        '200':
+          description: Rejected back to fraud queue
+          content:
+            application/json:
+              schema:
+                $ref: ./handoffs.schemas.yaml#/components/schemas/AmlHandoffResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

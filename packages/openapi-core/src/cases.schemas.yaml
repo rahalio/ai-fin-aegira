@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  title: Aegira cases schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    CaseId:
+      type: string
+      pattern: '^cse_[0-9A-HJKMNP-TV-Z]{26}$'
+    ScoreEventId:
+      type: string
+      pattern: '^scr_[0-9A-HJKMNP-TV-Z]{26}$'
+    ModelVersionId:
+      type: string
+      pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$'
+    CaseStatus:
+      type: string
+      enum: [open, investigating, closed]
+    FraudCase:
+      type: object
+      required:
+        - caseId
+        - scoreEventId
+        - status
+        - priority
+        - reasonCodes
+        - modelVersionId
+        - createdAt
+      properties:
+        caseId:
+          $ref: '#/components/schemas/CaseId'
+        scoreEventId:
+          $ref: '#/components/schemas/ScoreEventId'
+        status:
+          $ref: '#/components/schemas/CaseStatus'
+        priority:
+          type: integer
+        segment:
+          type: string
+        slaDueAt:
+          type: string
+          format: date-time
+        slaBreached:
+          type: boolean
+        assignedTo:
+          $ref: ./common/primitives.yaml#/components/schemas/UserId
+        reasonCodes:
+          type: array
+          items:
+            type: string
+        modelVersionId:
+          $ref: '#/components/schemas/ModelVersionId'
+        modelVersionName:
+          type: string
+        featureSnapshotPresent:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ReassignCaseRequest:
+      type: object
+      required: [assigneeUserId]
+      properties:
+        assigneeUserId:
+          $ref: ./common/primitives.yaml#/components/schemas/UserId
+    FraudCaseResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/FraudCase'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    FraudCaseListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FraudCase'
+        nextCursor:
+          type: string
+    FraudCaseListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/FraudCaseListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    QueueHeatmapCell:
+      type: object
+      required: [segment, openCount, breachedCount]
+      properties:
+        segment:
+          type: string
+        openCount:
+          type: integer
+        breachedCount:
+          type: integer
+    QueueSnapshot:
+      type: object
+      required: [cells, generatedAt]
+      properties:
+        cells:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueHeatmapCell'
+        generatedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    QueueHeatmapResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/QueueSnapshot'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    InvestigatorLoad:
+      type: object
+      required: [userId, openCount, investigatingCount]
+      properties:
+        userId:
+          $ref: ./common/primitives.yaml#/components/schemas/UserId
+        displayName:
+          type: string
+        openCount:
+          type: integer
+        investigatingCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    InvestigatorLoadListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvestigatorLoad'
+    InvestigatorLoadListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/InvestigatorLoadListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    PriorityPolicy:
+      type: object
+      required: [highValueSegments, vulnerableSegments]
+      properties:
+        highValueSegments:
+          type: array
+          items:
+            type: string
+        vulnerableSegments:
+          type: array
+          items:
+            type: string
+        autoPriorityBoost:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PriorityPolicyResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PriorityPolicy'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

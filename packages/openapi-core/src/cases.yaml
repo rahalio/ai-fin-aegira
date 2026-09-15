@@ -1,0 +1,285 @@
+openapi: 3.1.0
+info:
+  title: Aegira Cases API
+  version: 0.1.0
+  description: Investigator queue, SLA clocks, claim/reassign, and queue-manager policy (BR-3).
+  x-domain: cse
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Cases
+  - name: Queue
+paths:
+  /v1/cases:
+    get:
+      operationId: listFraudCases
+      tags: [Cases]
+      x-repository: FraudCase
+      x-dynamodb:
+        entityType: FRAUD_CASE
+        pkPatternTemplate: "CASE#${caseId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+        filterFields: [status, segment, assignedTo]
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: status
+          in: query
+          schema:
+            $ref: ./cases.schemas.yaml#/components/schemas/CaseStatus
+        - name: segment
+          in: query
+          schema:
+            type: string
+        - name: assignedTo
+          in: query
+          schema:
+            $ref: ./common/primitives.yaml#/components/schemas/UserId
+        - name: slaBreached
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Cases
+          content:
+            application/json:
+              schema:
+                $ref: ./cases.schemas.yaml#/components/schemas/FraudCaseListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/cases/{caseId}:
+    get:
+      operationId: getFraudCase
+      tags: [Cases]
+      x-repository: FraudCase
+      x-dynamodb:
+        entityType: FRAUD_CASE
+        pkPatternTemplate: "CASE#${caseId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: ./cases.schemas.yaml#/components/schemas/CaseId
+      responses:
+        '200':
+          description: Case package
+          content:
+            application/json:
+              schema:
+                $ref: ./cases.schemas.yaml#/components/schemas/FraudCaseResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/cases/{caseId}/claim:
+    post:
+      operationId: claimFraudCase
+      tags: [Cases]
+      x-repository: FraudCase
+      x-dynamodb:
+        entityType: FRAUD_CASE
+        pkPatternTemplate: "CASE#${caseId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: ./cases.schemas.yaml#/components/schemas/CaseId
+      responses:
+        '200':
+          description: Claimed
+          content:
+            application/json:
+              schema:
+                $ref: ./cases.schemas.yaml#/components/schemas/FraudCaseResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        '409':
+          $ref: ./common/responses.yaml#/components/responses/Conflict
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/cases/{caseId}/reassign:
+    post:
+      operationId: reassignFraudCase
+      tags: [Cases]
+      x-repository: FraudCase
+      x-dynamodb:
+        entityType: FRAUD_CASE
+        pkPatternTemplate: "CASE#${caseId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: ./cases.schemas.yaml#/components/schemas/CaseId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./cases.schemas.yaml#/components/schemas/ReassignCaseRequest
+      responses:
+        '200':
+          description: Reassigned
+          content:
+            application/json:
+              schema:
+                $ref: ./cases.schemas.yaml#/components/schemas/FraudCaseResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/queue/heatmap:
+    get:
+      operationId: getQueueHeatmap
+      tags: [Queue]
+      x-repository: QueueSnapshot
+      x-dynamodb:
+        entityType: QUEUE_SNAPSHOT
+        pkPatternTemplate: "QUEUE#HEATMAP"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: SLA heatmap by segment
+          content:
+            application/json:
+              schema:
+                $ref: ./cases.schemas.yaml#/components/schemas/QueueHeatmapResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/queue/investigators:
+    get:
+      operationId: listInvestigatorLoad
+      tags: [Queue]
+      x-repository: InvestigatorLoad
+      x-dynamodb:
+        entityType: INVESTIGATOR_LOAD
+        pkPatternTemplate: "QUEUE#LOAD"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: Investigator load
+          content:
+            application/json:
+              schema:
+                $ref: ./cases.schemas.yaml#/components/schemas/InvestigatorLoadListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/queue/priority-policy:
+    get:
+      operationId: getPriorityPolicy
+      tags: [Queue]
+      x-repository: PriorityPolicy
+      x-dynamodb:
+        entityType: PRIORITY_POLICY
+        pkPatternTemplate: "QUEUE#POLICY"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: Priority policy
+          content:
+            application/json:
+              schema:
+                $ref: ./cases.schemas.yaml#/components/schemas/PriorityPolicyResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    put:
+      operationId: updatePriorityPolicy
+      tags: [Queue]
+      x-repository: PriorityPolicy
+      x-dynamodb:
+        entityType: PRIORITY_POLICY
+        pkPatternTemplate: "QUEUE#POLICY"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./cases.schemas.yaml#/components/schemas/PriorityPolicy
+      responses:
+        '200':
+          description: Updated policy
+          content:
+            application/json:
+              schema:
+                $ref: ./cases.schemas.yaml#/components/schemas/PriorityPolicyResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

@@ -1,0 +1,57 @@
+openapi: 3.1.0
+info:
+  title: Aegira care schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    CareStatusId:
+      type: string
+      pattern: '^car_[0-9A-HJKMNP-TV-Z]{26}$'
+    CareStatus:
+      type: object
+      required:
+        - careStatusId
+        - paymentRefMasked
+        - lockState
+        - paymentState
+        - createdAt
+      properties:
+        careStatusId:
+          $ref: '#/components/schemas/CareStatusId'
+        paymentRefMasked:
+          type: string
+        lockState:
+          type: string
+          enum: [unlocked, locked, pending_review]
+        paymentState:
+          type: string
+          enum: [allowed, declined, held]
+        allowedCareActions:
+          type: array
+          items:
+            type: string
+        callbackRequested:
+          type: boolean
+        lastCallOutcome:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CareCallOutcome:
+      type: object
+      required: [outcome]
+      properties:
+        outcome:
+          type: string
+    CareStatusResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/CareStatus'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

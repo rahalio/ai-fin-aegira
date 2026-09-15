@@ -1,0 +1,132 @@
+openapi: 3.1.0
+info:
+  title: Aegira audit schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    LogId:
+      type: string
+      pattern: '^aud_[0-9A-HJKMNP-TV-Z]{26}$'
+    PackId:
+      type: string
+      pattern: '^pck_[0-9A-HJKMNP-TV-Z]{26}$'
+    CaseAccessLog:
+      type: object
+      required: [logId, caseId, actorUserId, action, createdAt]
+      properties:
+        logId:
+          $ref: '#/components/schemas/LogId'
+        caseId:
+          type: string
+        actorUserId:
+          $ref: ./common/primitives.yaml#/components/schemas/UserId
+        action:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CaseAccessLogListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseAccessLog'
+        nextCursor:
+          type: string
+    CaseAccessLogListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/CaseAccessLogListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    PromotionAudit:
+      type: object
+      required: [logId, promotionId, actorUserId, action, createdAt]
+      properties:
+        logId:
+          $ref: '#/components/schemas/LogId'
+        promotionId:
+          type: string
+        actorUserId:
+          $ref: ./common/primitives.yaml#/components/schemas/UserId
+        action:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PromotionAuditListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionAudit'
+        nextCursor:
+          type: string
+    PromotionAuditListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PromotionAuditListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    RetentionPolicy:
+      type: object
+      required: [caseDays, scoreSnapshotDays]
+      properties:
+        caseDays:
+          type: integer
+        scoreSnapshotDays:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RetentionPolicyResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/RetentionPolicy'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    AssurancePack:
+      type: object
+      required: [packId, status, createdAt]
+      properties:
+        packId:
+          $ref: '#/components/schemas/PackId'
+        status:
+          type: string
+          enum: [ready, failed]
+        downloadHint:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AssurancePackResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AssurancePack'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

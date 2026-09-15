@@ -1,0 +1,183 @@
+openapi: 3.1.0
+info:
+  title: Aegira scoring schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    ScoreEventId:
+      type: string
+      pattern: '^scr_[0-9A-HJKMNP-TV-Z]{26}$'
+    ModelVersionId:
+      type: string
+      pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$'
+    LatencyBreachId:
+      type: string
+      pattern: '^brc_[0-9A-HJKMNP-TV-Z]{26}$'
+    ScoreDecision:
+      type: string
+      enum: [allow, step_up, decline, case]
+    FeatureHighlight:
+      type: object
+      required: [key, contribution]
+      properties:
+        key:
+          type: string
+        contribution:
+          type: number
+        displayValue:
+          type: string
+          description: PCI-minimised display (no PAN/CVV).
+    ScoreEvent:
+      type: object
+      required:
+        - scoreEventId
+        - transactionRef
+        - modelVersionId
+        - modelVersionName
+        - modelRole
+        - score
+        - decision
+        - createdAt
+      properties:
+        scoreEventId:
+          $ref: '#/components/schemas/ScoreEventId'
+        transactionRef:
+          type: string
+        amount:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        merchantId:
+          type: string
+        deviceId:
+          type: string
+        modelVersionId:
+          $ref: '#/components/schemas/ModelVersionId'
+        modelVersionName:
+          type: string
+        modelRole:
+          type: string
+          enum: [champion, challenger]
+        score:
+          type: number
+        decision:
+          $ref: '#/components/schemas/ScoreDecision'
+        latencyMs:
+          type: integer
+        featureHighlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureHighlight'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ScoreEventRequest:
+      type: object
+      required: [transactionRef, amount]
+      properties:
+        transactionRef:
+          type: string
+        amount:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        merchantId:
+          type: string
+        deviceId:
+          type: string
+        features:
+          type: object
+          additionalProperties: true
+    ScoreEventResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ScoreEvent'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ScoreEventListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreEvent'
+        nextCursor:
+          type: string
+    ScoreEventListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ScoreEventListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    LatencyBudget:
+      type: object
+      required: [p99BudgetMs, p50Ms, p99Ms, status, updatedAt]
+      properties:
+        p99BudgetMs:
+          type: integer
+        p50Ms:
+          type: integer
+        p99Ms:
+          type: integer
+        status:
+          type: string
+          enum: [healthy, breaching]
+        lastBreachAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LatencyBudgetUpdate:
+      type: object
+      required: [p99BudgetMs]
+      properties:
+        p99BudgetMs:
+          type: integer
+          minimum: 1
+    LatencyHealthResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/LatencyBudget'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    LatencyBreach:
+      type: object
+      required: [breachId, p99Ms, budgetMs, status, createdAt]
+      properties:
+        breachId:
+          $ref: '#/components/schemas/LatencyBreachId'
+        p99Ms:
+          type: integer
+        budgetMs:
+          type: integer
+        status:
+          type: string
+          enum: [open, acknowledged]
+        acknowledgedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LatencyBreachResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/LatencyBreach'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

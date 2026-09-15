@@ -1,0 +1,228 @@
+openapi: 3.1.0
+info:
+  title: Aegira Scoring API
+  version: 0.1.0
+  description: |
+    Hot-path event scoring with champion/challenger attribution, PCI-minimised
+    feature snapshots, and latency budget monitoring (BR-1, BR-6).
+  x-domain: scr
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Scores
+    description: Transaction scoring
+  - name: Latency
+    description: Hot-path latency budgets and breaches
+paths:
+  /v1/scores:
+    post:
+      operationId: scoreTransaction
+      tags: [Scores]
+      summary: Score a payment or account event
+      security:
+        - apiKey: []
+      x-repository: ScoreEvent
+      x-dynamodb:
+        entityType: SCORE_EVENT
+        pkPatternTemplate: "SCORE#${scoreEventId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./scoring.schemas.yaml#/components/schemas/ScoreEventRequest
+      responses:
+        '201':
+          description: Scored
+          content:
+            application/json:
+              schema:
+                $ref: ./scoring.schemas.yaml#/components/schemas/ScoreEventResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    get:
+      operationId: listScoreEvents
+      tags: [Scores]
+      summary: List scored events
+      x-repository: ScoreEvent
+      x-dynamodb:
+        entityType: SCORE_EVENT
+        pkPatternTemplate: "SCORE#${scoreEventId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+        filterFields: [decision, modelVersionId]
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: decision
+          in: query
+          schema:
+            $ref: ./scoring.schemas.yaml#/components/schemas/ScoreDecision
+        - name: modelVersionId
+          in: query
+          schema:
+            $ref: ./scoring.schemas.yaml#/components/schemas/ModelVersionId
+      responses:
+        '200':
+          description: Score events
+          content:
+            application/json:
+              schema:
+                $ref: ./scoring.schemas.yaml#/components/schemas/ScoreEventListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/scores/{scoreEventId}:
+    get:
+      operationId: getScoreEvent
+      tags: [Scores]
+      summary: Get a scored event with named model version and feature snapshot
+      x-repository: ScoreEvent
+      x-dynamodb:
+        entityType: SCORE_EVENT
+        pkPatternTemplate: "SCORE#${scoreEventId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: scoreEventId
+          in: path
+          required: true
+          schema:
+            $ref: ./scoring.schemas.yaml#/components/schemas/ScoreEventId
+      responses:
+        '200':
+          description: Score event
+          content:
+            application/json:
+              schema:
+                $ref: ./scoring.schemas.yaml#/components/schemas/ScoreEventResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/scoring/latency:
+    get:
+      operationId: getScoringLatencyHealth
+      tags: [Latency]
+      summary: p50/p99 vs configured budget
+      x-repository: LatencyBudget
+      x-dynamodb:
+        entityType: LATENCY_BUDGET
+        pkPatternTemplate: "LATENCY#BUDGET"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: Latency health
+          content:
+            application/json:
+              schema:
+                $ref: ./scoring.schemas.yaml#/components/schemas/LatencyHealthResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    patch:
+      operationId: updateScoringLatencyBudget
+      tags: [Latency]
+      summary: Update latency budget (admin, audited)
+      x-repository: LatencyBudget
+      x-dynamodb:
+        entityType: LATENCY_BUDGET
+        pkPatternTemplate: "LATENCY#BUDGET"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./scoring.schemas.yaml#/components/schemas/LatencyBudgetUpdate
+      responses:
+        '200':
+          description: Updated budget
+          content:
+            application/json:
+              schema:
+                $ref: ./scoring.schemas.yaml#/components/schemas/LatencyHealthResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/scoring/latency-breaches/{breachId}/acknowledge:
+    post:
+      operationId: acknowledgeLatencyBreach
+      tags: [Latency]
+      summary: Acknowledge an on-call latency page
+      x-repository: LatencyBreach
+      x-dynamodb:
+        entityType: LATENCY_BREACH
+        pkPatternTemplate: "LATENCY#BREACH#${breachId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: breachId
+          in: path
+          required: true
+          schema:
+            $ref: ./scoring.schemas.yaml#/components/schemas/LatencyBreachId
+      responses:
+        '200':
+          description: Breach acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: ./scoring.schemas.yaml#/components/schemas/LatencyBreachResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

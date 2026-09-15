@@ -1,0 +1,255 @@
+openapi: 3.1.0
+info:
+  title: Aegira Models API
+  version: 0.1.0
+  description: Champion/challenger versions and dual-control promotion/rollback (BR-2, BR-10).
+  x-domain: mdl
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Models
+  - name: Promotions
+paths:
+  /v1/models:
+    get:
+      operationId: listFraudModels
+      tags: [Models]
+      x-repository: ModelVersion
+      x-dynamodb:
+        entityType: MODEL_VERSION
+        pkPatternTemplate: "MODEL#${modelVersionId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+        filterFields: [role, status]
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [champion, challenger]
+      responses:
+        '200':
+          description: Model versions
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/ModelVersionListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/models/{modelVersionId}:
+    get:
+      operationId: getFraudModel
+      tags: [Models]
+      x-repository: ModelVersion
+      x-dynamodb:
+        entityType: MODEL_VERSION
+        pkPatternTemplate: "MODEL#${modelVersionId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: modelVersionId
+          in: path
+          required: true
+          schema:
+            $ref: ./models.schemas.yaml#/components/schemas/ModelVersionId
+      responses:
+        '200':
+          description: Model version
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/ModelVersionResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/promotions:
+    get:
+      operationId: listPromotionDecisions
+      tags: [Promotions]
+      x-repository: PromotionDecision
+      x-dynamodb:
+        entityType: PROMOTION_DECISION
+        pkPatternTemplate: "PROMO#${promotionId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Promotion decisions
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/PromotionDecisionListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: proposePromotion
+      tags: [Promotions]
+      x-repository: PromotionDecision
+      x-dynamodb:
+        entityType: PROMOTION_DECISION
+        pkPatternTemplate: "PROMO#${promotionId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./models.schemas.yaml#/components/schemas/PromotionPropose
+      responses:
+        '201':
+          description: Proposed
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/PromotionDecisionResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/promotions/{promotionId}/approve:
+    post:
+      operationId: approvePromotion
+      tags: [Promotions]
+      x-repository: PromotionDecision
+      x-dynamodb:
+        entityType: PROMOTION_DECISION
+        pkPatternTemplate: "PROMO#${promotionId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: promotionId
+          in: path
+          required: true
+          schema:
+            $ref: ./models.schemas.yaml#/components/schemas/PromotionId
+      responses:
+        '200':
+          description: Approval recorded (needs two distinct approvers)
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/PromotionDecisionResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        '409':
+          $ref: ./common/responses.yaml#/components/responses/Conflict
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/promotions/{promotionId}/reject:
+    post:
+      operationId: rejectPromotion
+      tags: [Promotions]
+      x-repository: PromotionDecision
+      x-dynamodb:
+        entityType: PROMOTION_DECISION
+        pkPatternTemplate: "PROMO#${promotionId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: promotionId
+          in: path
+          required: true
+          schema:
+            $ref: ./models.schemas.yaml#/components/schemas/PromotionId
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/PromotionDecisionResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/promotions/{promotionId}/rollback:
+    post:
+      operationId: rollbackPromotion
+      tags: [Promotions]
+      x-repository: PromotionDecision
+      x-dynamodb:
+        entityType: PROMOTION_DECISION
+        pkPatternTemplate: "PROMO#${promotionId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: promotionId
+          in: path
+          required: true
+          schema:
+            $ref: ./models.schemas.yaml#/components/schemas/PromotionId
+      responses:
+        '200':
+          description: Rolled back
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/PromotionDecisionResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

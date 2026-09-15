@@ -1,0 +1,161 @@
+openapi: 3.1.0
+info:
+  title: Aegira Audit API
+  version: 0.1.0
+  description: Case-access logs, promotion audit, and retention (BR-1, BR-7, BR-10).
+  x-domain: aud
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Audit
+paths:
+  /v1/audit/case-access:
+    get:
+      operationId: listCaseAccessLog
+      tags: [Audit]
+      x-repository: CaseAccessLog
+      x-dynamodb:
+        entityType: CASE_ACCESS_LOG
+        pkPatternTemplate: "AUDIT#CASE"
+        skPatternTemplate: "LOG#${logId}"
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Case access log
+          content:
+            application/json:
+              schema:
+                $ref: ./audit.schemas.yaml#/components/schemas/CaseAccessLogListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/audit/promotions:
+    get:
+      operationId: listPromotionAudit
+      tags: [Audit]
+      x-repository: PromotionAudit
+      x-dynamodb:
+        entityType: PROMOTION_AUDIT
+        pkPatternTemplate: "AUDIT#PROMO"
+        skPatternTemplate: "LOG#${logId}"
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Promotion audit
+          content:
+            application/json:
+              schema:
+                $ref: ./audit.schemas.yaml#/components/schemas/PromotionAuditListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/audit/retention:
+    get:
+      operationId: getRetentionPolicy
+      tags: [Audit]
+      x-repository: RetentionPolicy
+      x-dynamodb:
+        entityType: RETENTION_POLICY
+        pkPatternTemplate: "AUDIT#RETENTION"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: Retention windows
+          content:
+            application/json:
+              schema:
+                $ref: ./audit.schemas.yaml#/components/schemas/RetentionPolicyResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    patch:
+      operationId: updateRetentionPolicy
+      tags: [Audit]
+      x-repository: RetentionPolicy
+      x-dynamodb:
+        entityType: RETENTION_POLICY
+        pkPatternTemplate: "AUDIT#RETENTION"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./audit.schemas.yaml#/components/schemas/RetentionPolicy
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: ./audit.schemas.yaml#/components/schemas/RetentionPolicyResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/audit/assurance-pack:
+    post:
+      operationId: exportAssurancePack
+      tags: [Audit]
+      x-repository: AssurancePack
+      x-dynamodb:
+        entityType: ASSURANCE_PACK
+        pkPatternTemplate: "AUDIT#PACK#${packId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      responses:
+        '201':
+          description: Pack exported
+          content:
+            application/json:
+              schema:
+                $ref: ./audit.schemas.yaml#/components/schemas/AssurancePackResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

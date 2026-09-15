@@ -1,0 +1,80 @@
+openapi: 3.1.0
+info:
+  title: Aegira handoff schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    CaseId:
+      type: string
+      pattern: '^cse_[0-9A-HJKMNP-TV-Z]{26}$'
+    HandoffId:
+      type: string
+      pattern: '^hnd_[0-9A-HJKMNP-TV-Z]{26}$'
+    AmlHandoff:
+      type: object
+      required:
+        - handoffId
+        - caseId
+        - reasonCode
+        - status
+        - createdAt
+      properties:
+        handoffId:
+          $ref: '#/components/schemas/HandoffId'
+        caseId:
+          $ref: '#/components/schemas/CaseId'
+        reasonCode:
+          type: string
+        status:
+          type: string
+          enum: [submitted, accepted, rejected]
+        note:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AmlHandoffCreate:
+      type: object
+      required: [caseId, reasonCode]
+      properties:
+        caseId:
+          $ref: '#/components/schemas/CaseId'
+        reasonCode:
+          type: string
+        note:
+          type: string
+    AmlHandoffReject:
+      type: object
+      properties:
+        note:
+          type: string
+    AmlHandoffResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AmlHandoff'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    AmlHandoffListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AmlHandoff'
+        nextCursor:
+          type: string
+    AmlHandoffListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AmlHandoffListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

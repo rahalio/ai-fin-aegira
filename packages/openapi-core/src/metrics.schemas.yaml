@@ -1,0 +1,103 @@
+openapi: 3.1.0
+info:
+  title: Aegira metrics schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    OpsMetrics:
+      type: object
+      required:
+        - lossPrevented
+        - falsePositiveCost
+        - frictionEvents
+        - investigatorHoursPerConfirmed
+        - labellingCoveragePct
+        - generatedAt
+      properties:
+        lossPrevented:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        falsePositiveCost:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        frictionEvents:
+          type: integer
+        investigatorHoursPerConfirmed:
+          type: number
+        labellingCoveragePct:
+          type: number
+        generatedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OpsMetricsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/OpsMetrics'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    WeeklyLift:
+      type: object
+      required: [weekStart, championPrecision, challengerPrecision]
+      properties:
+        weekStart:
+          type: string
+          format: date
+        championPrecision:
+          type: number
+        challengerPrecision:
+          type: number
+        falsePositiveDelta:
+          type: number
+        experimentId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    WeeklyLiftResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/WeeklyLift'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    DispositionMix:
+      type: object
+      required:
+        - fraudConfirmed
+        - friendlyFraud
+        - falsePositive
+        - unableToDetermine
+      properties:
+        fraudConfirmed:
+          type: integer
+        friendlyFraud:
+          type: integer
+        falsePositive:
+          type: integer
+        unableToDetermine:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    DispositionMixResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/DispositionMix'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

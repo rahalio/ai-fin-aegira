@@ -1,0 +1,135 @@
+openapi: 3.1.0
+info:
+  title: Aegira model schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    ModelVersionId:
+      type: string
+      pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$'
+    PromotionId:
+      type: string
+      pattern: '^prm_[0-9A-HJKMNP-TV-Z]{26}$'
+    ExperimentId:
+      type: string
+      pattern: '^exp_[0-9A-HJKMNP-TV-Z]{26}$'
+    ModelVersion:
+      type: object
+      required:
+        - modelVersionId
+        - name
+        - role
+        - status
+        - createdAt
+      properties:
+        modelVersionId:
+          $ref: '#/components/schemas/ModelVersionId'
+        name:
+          type: string
+        role:
+          type: string
+          enum: [champion, challenger]
+        status:
+          type: string
+          enum: [shadow, limited, production, retired]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ModelVersionResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ModelVersion'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ModelVersionListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelVersion'
+        nextCursor:
+          type: string
+    ModelVersionListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ModelVersionListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    PromotionDecision:
+      type: object
+      required:
+        - promotionId
+        - challengerModelId
+        - status
+        - approverIds
+        - createdAt
+      properties:
+        promotionId:
+          $ref: '#/components/schemas/PromotionId'
+        experimentId:
+          $ref: '#/components/schemas/ExperimentId'
+        championModelId:
+          $ref: '#/components/schemas/ModelVersionId'
+        challengerModelId:
+          $ref: '#/components/schemas/ModelVersionId'
+        status:
+          type: string
+          enum: [proposed, pending_second, approved, rejected, rolled_back]
+        criteriaMet:
+          type: boolean
+        approverIds:
+          type: array
+          items:
+            $ref: ./common/primitives.yaml#/components/schemas/UserId
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PromotionPropose:
+      type: object
+      required: [challengerModelId]
+      properties:
+        experimentId:
+          $ref: '#/components/schemas/ExperimentId'
+        challengerModelId:
+          $ref: '#/components/schemas/ModelVersionId'
+        championModelId:
+          $ref: '#/components/schemas/ModelVersionId'
+    PromotionDecisionResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PromotionDecision'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    PromotionDecisionListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionDecision'
+        nextCursor:
+          type: string
+    PromotionDecisionListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PromotionDecisionListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

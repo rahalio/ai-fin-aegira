@@ -1,0 +1,942 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const updatePriorityPolicy_Body = z
+  .object({
+    highValueSegments: z.array(z.string()),
+    vulnerableSegments: z.array(z.string()),
+    autoPriorityBoost: z.number().int().optional(),
+    createdAt: z.string().datetime({ offset: true }).optional(),
+    updatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const CaseStatus = z.enum(['open', 'investigating', 'closed']);
+const UserId = z.string();
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const CaseId = z.string();
+const ScoreEventId = z.string();
+const ModelVersionId = z.string();
+const FraudCase = z
+  .object({
+    caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+    scoreEventId: z.string().regex(/^scr_[0-9A-HJKMNP-TV-Z]{26}$/),
+    status: z.enum(['open', 'investigating', 'closed']),
+    priority: z.number().int(),
+    segment: z.string().optional(),
+    slaDueAt: z.string().datetime({ offset: true }).optional(),
+    slaBreached: z.boolean().optional(),
+    assignedTo: z
+      .string()
+      .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+      .optional(),
+    reasonCodes: z.array(z.string()),
+    modelVersionId: z.string().regex(/^mdl_[0-9A-HJKMNP-TV-Z]{26}$/),
+    modelVersionName: z.string().optional(),
+    featureSnapshotPresent: z.boolean().optional(),
+    createdAt: z.string().datetime({ offset: true }),
+    updatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const FraudCaseListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+          scoreEventId: z.string().regex(/^scr_[0-9A-HJKMNP-TV-Z]{26}$/),
+          status: z.enum(['open', 'investigating', 'closed']),
+          priority: z.number().int(),
+          segment: z.string().optional(),
+          slaDueAt: z.string().datetime({ offset: true }).optional(),
+          slaBreached: z.boolean().optional(),
+          assignedTo: z
+            .string()
+            .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+            .optional(),
+          reasonCodes: z.array(z.string()),
+          modelVersionId: z.string().regex(/^mdl_[0-9A-HJKMNP-TV-Z]{26}$/),
+          modelVersionName: z.string().optional(),
+          featureSnapshotPresent: z.boolean().optional(),
+          createdAt: z.string().datetime({ offset: true }),
+          updatedAt: z.string().datetime({ offset: true }).optional(),
+        })
+        .passthrough()
+    ),
+    nextCursor: z.string().optional(),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const FraudCaseListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+              scoreEventId: z.string().regex(/^scr_[0-9A-HJKMNP-TV-Z]{26}$/),
+              status: z.enum(['open', 'investigating', 'closed']),
+              priority: z.number().int(),
+              segment: z.string().optional(),
+              slaDueAt: z.string().datetime({ offset: true }).optional(),
+              slaBreached: z.boolean().optional(),
+              assignedTo: z
+                .string()
+                .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+                .optional(),
+              reasonCodes: z.array(z.string()),
+              modelVersionId: z.string().regex(/^mdl_[0-9A-HJKMNP-TV-Z]{26}$/),
+              modelVersionName: z.string().optional(),
+              featureSnapshotPresent: z.boolean().optional(),
+              createdAt: z.string().datetime({ offset: true }),
+              updatedAt: z.string().datetime({ offset: true }).optional(),
+            })
+            .passthrough()
+        ),
+        nextCursor: z.string().optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const FraudCaseResponse = z
+  .object({
+    data: z
+      .object({
+        caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+        scoreEventId: z.string().regex(/^scr_[0-9A-HJKMNP-TV-Z]{26}$/),
+        status: z.enum(['open', 'investigating', 'closed']),
+        priority: z.number().int(),
+        segment: z.string().optional(),
+        slaDueAt: z.string().datetime({ offset: true }).optional(),
+        slaBreached: z.boolean().optional(),
+        assignedTo: z
+          .string()
+          .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+        reasonCodes: z.array(z.string()),
+        modelVersionId: z.string().regex(/^mdl_[0-9A-HJKMNP-TV-Z]{26}$/),
+        modelVersionName: z.string().optional(),
+        featureSnapshotPresent: z.boolean().optional(),
+        createdAt: z.string().datetime({ offset: true }),
+        updatedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const ReassignCaseRequest = z
+  .object({ assigneeUserId: z.string().regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/) })
+  .passthrough();
+const QueueHeatmapCell = z
+  .object({
+    segment: z.string(),
+    openCount: z.number().int(),
+    breachedCount: z.number().int(),
+  })
+  .passthrough();
+const QueueSnapshot = z
+  .object({
+    cells: z.array(
+      z
+        .object({
+          segment: z.string(),
+          openCount: z.number().int(),
+          breachedCount: z.number().int(),
+        })
+        .passthrough()
+    ),
+    generatedAt: z.string().datetime({ offset: true }),
+    createdAt: z.string().datetime({ offset: true }).optional(),
+    updatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const QueueHeatmapResponse = z
+  .object({
+    data: z
+      .object({
+        cells: z.array(
+          z
+            .object({
+              segment: z.string(),
+              openCount: z.number().int(),
+              breachedCount: z.number().int(),
+            })
+            .passthrough()
+        ),
+        generatedAt: z.string().datetime({ offset: true }),
+        createdAt: z.string().datetime({ offset: true }).optional(),
+        updatedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const InvestigatorLoad = z
+  .object({
+    userId: z.string().regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/),
+    displayName: z.string().optional(),
+    openCount: z.number().int(),
+    investigatingCount: z.number().int(),
+    createdAt: z.string().datetime({ offset: true }).optional(),
+    updatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const InvestigatorLoadListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          userId: z.string().regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/),
+          displayName: z.string().optional(),
+          openCount: z.number().int(),
+          investigatingCount: z.number().int(),
+          createdAt: z.string().datetime({ offset: true }).optional(),
+          updatedAt: z.string().datetime({ offset: true }).optional(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const InvestigatorLoadListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              userId: z.string().regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/),
+              displayName: z.string().optional(),
+              openCount: z.number().int(),
+              investigatingCount: z.number().int(),
+              createdAt: z.string().datetime({ offset: true }).optional(),
+              updatedAt: z.string().datetime({ offset: true }).optional(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const PriorityPolicy = z
+  .object({
+    highValueSegments: z.array(z.string()),
+    vulnerableSegments: z.array(z.string()),
+    autoPriorityBoost: z.number().int().optional(),
+    createdAt: z.string().datetime({ offset: true }).optional(),
+    updatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const PriorityPolicyResponse = z
+  .object({
+    data: z
+      .object({
+        highValueSegments: z.array(z.string()),
+        vulnerableSegments: z.array(z.string()),
+        autoPriorityBoost: z.number().int().optional(),
+        createdAt: z.string().datetime({ offset: true }).optional(),
+        updatedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  updatePriorityPolicy_Body,
+  CaseStatus,
+  UserId,
+  Problem,
+  CaseId,
+  ScoreEventId,
+  ModelVersionId,
+  FraudCase,
+  FraudCaseListData,
+  ResponseMeta,
+  FraudCaseListResponse,
+  FraudCaseResponse,
+  ReassignCaseRequest,
+  QueueHeatmapCell,
+  QueueSnapshot,
+  QueueHeatmapResponse,
+  InvestigatorLoad,
+  InvestigatorLoadListData,
+  InvestigatorLoadListResponse,
+  PriorityPolicy,
+  PriorityPolicyResponse,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/cases',
+    alias: 'listFraudCases',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: 'status',
+        type: 'Query',
+        schema: z.enum(['open', 'investigating', 'closed']).optional(),
+      },
+      {
+        name: 'segment',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'assignedTo',
+        type: 'Query',
+        schema: z
+          .string()
+          .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+      },
+      {
+        name: 'slaBreached',
+        type: 'Query',
+        schema: z.boolean().optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  scoreEventId: z
+                    .string()
+                    .regex(/^scr_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  status: z.enum(['open', 'investigating', 'closed']),
+                  priority: z.number().int(),
+                  segment: z.string().optional(),
+                  slaDueAt: z.string().datetime({ offset: true }).optional(),
+                  slaBreached: z.boolean().optional(),
+                  assignedTo: z
+                    .string()
+                    .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+                    .optional(),
+                  reasonCodes: z.array(z.string()),
+                  modelVersionId: z
+                    .string()
+                    .regex(/^mdl_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  modelVersionName: z.string().optional(),
+                  featureSnapshotPresent: z.boolean().optional(),
+                  createdAt: z.string().datetime({ offset: true }),
+                  updatedAt: z.string().datetime({ offset: true }).optional(),
+                })
+                .passthrough()
+            ),
+            nextCursor: z.string().optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/cases/:caseId',
+    alias: 'getFraudCase',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'caseId',
+        type: 'Path',
+        schema: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+            scoreEventId: z.string().regex(/^scr_[0-9A-HJKMNP-TV-Z]{26}$/),
+            status: z.enum(['open', 'investigating', 'closed']),
+            priority: z.number().int(),
+            segment: z.string().optional(),
+            slaDueAt: z.string().datetime({ offset: true }).optional(),
+            slaBreached: z.boolean().optional(),
+            assignedTo: z
+              .string()
+              .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+              .optional(),
+            reasonCodes: z.array(z.string()),
+            modelVersionId: z.string().regex(/^mdl_[0-9A-HJKMNP-TV-Z]{26}$/),
+            modelVersionName: z.string().optional(),
+            featureSnapshotPresent: z.boolean().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/cases/:caseId/claim',
+    alias: 'claimFraudCase',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+      {
+        name: 'caseId',
+        type: 'Path',
+        schema: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+            scoreEventId: z.string().regex(/^scr_[0-9A-HJKMNP-TV-Z]{26}$/),
+            status: z.enum(['open', 'investigating', 'closed']),
+            priority: z.number().int(),
+            segment: z.string().optional(),
+            slaDueAt: z.string().datetime({ offset: true }).optional(),
+            slaBreached: z.boolean().optional(),
+            assignedTo: z
+              .string()
+              .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+              .optional(),
+            reasonCodes: z.array(z.string()),
+            modelVersionId: z.string().regex(/^mdl_[0-9A-HJKMNP-TV-Z]{26}$/),
+            modelVersionName: z.string().optional(),
+            featureSnapshotPresent: z.boolean().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 409,
+        description: `Idempotency key reuse with different body, or state conflict`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/cases/:caseId/reassign',
+    alias: 'reassignFraudCase',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: z
+          .object({
+            assigneeUserId: z.string().regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/),
+          })
+          .passthrough(),
+      },
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+      {
+        name: 'caseId',
+        type: 'Path',
+        schema: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            caseId: z.string().regex(/^cse_[0-9A-HJKMNP-TV-Z]{26}$/),
+            scoreEventId: z.string().regex(/^scr_[0-9A-HJKMNP-TV-Z]{26}$/),
+            status: z.enum(['open', 'investigating', 'closed']),
+            priority: z.number().int(),
+            segment: z.string().optional(),
+            slaDueAt: z.string().datetime({ offset: true }).optional(),
+            slaBreached: z.boolean().optional(),
+            assignedTo: z
+              .string()
+              .regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/)
+              .optional(),
+            reasonCodes: z.array(z.string()),
+            modelVersionId: z.string().regex(/^mdl_[0-9A-HJKMNP-TV-Z]{26}$/),
+            modelVersionName: z.string().optional(),
+            featureSnapshotPresent: z.boolean().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Malformed request`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/queue/heatmap',
+    alias: 'getQueueHeatmap',
+    requestFormat: 'json',
+    response: z
+      .object({
+        data: z
+          .object({
+            cells: z.array(
+              z
+                .object({
+                  segment: z.string(),
+                  openCount: z.number().int(),
+                  breachedCount: z.number().int(),
+                })
+                .passthrough()
+            ),
+            generatedAt: z.string().datetime({ offset: true }),
+            createdAt: z.string().datetime({ offset: true }).optional(),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/queue/investigators',
+    alias: 'listInvestigatorLoad',
+    requestFormat: 'json',
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  userId: z.string().regex(/^usr_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  displayName: z.string().optional(),
+                  openCount: z.number().int(),
+                  investigatingCount: z.number().int(),
+                  createdAt: z.string().datetime({ offset: true }).optional(),
+                  updatedAt: z.string().datetime({ offset: true }).optional(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/queue/priority-policy',
+    alias: 'getPriorityPolicy',
+    requestFormat: 'json',
+    response: z
+      .object({
+        data: z
+          .object({
+            highValueSegments: z.array(z.string()),
+            vulnerableSegments: z.array(z.string()),
+            autoPriorityBoost: z.number().int().optional(),
+            createdAt: z.string().datetime({ offset: true }).optional(),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'put',
+    path: '/v1/queue/priority-policy',
+    alias: 'updatePriorityPolicy',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: updatePriorityPolicy_Body,
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            highValueSegments: z.array(z.string()),
+            vulnerableSegments: z.array(z.string()),
+            autoPriorityBoost: z.number().int().optional(),
+            createdAt: z.string().datetime({ offset: true }).optional(),
+            updatedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Malformed request`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

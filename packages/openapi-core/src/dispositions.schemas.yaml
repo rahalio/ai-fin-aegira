@@ -1,0 +1,80 @@
+openapi: 3.1.0
+info:
+  title: Aegira disposition schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    CaseId:
+      type: string
+      pattern: '^cse_[0-9A-HJKMNP-TV-Z]{26}$'
+    DispositionId:
+      type: string
+      pattern: '^dsp_[0-9A-HJKMNP-TV-Z]{26}$'
+    DispositionCode:
+      type: string
+      enum: [fraud_confirmed, friendly_fraud, false_positive, unable_to_determine]
+    Disposition:
+      type: object
+      required:
+        - dispositionId
+        - caseId
+        - code
+        - locked
+        - createdAt
+      properties:
+        dispositionId:
+          $ref: '#/components/schemas/DispositionId'
+        caseId:
+          $ref: '#/components/schemas/CaseId'
+        code:
+          $ref: '#/components/schemas/DispositionCode'
+        notes:
+          type: string
+        analystId:
+          $ref: ./common/primitives.yaml#/components/schemas/UserId
+        locked:
+          type: boolean
+        undoUntil:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    DispositionCreate:
+      type: object
+      required: [code]
+      properties:
+        code:
+          $ref: '#/components/schemas/DispositionCode'
+        notes:
+          type: string
+    DispositionResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Disposition'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    DispositionListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Disposition'
+        nextCursor:
+          type: string
+    DispositionListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/DispositionListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

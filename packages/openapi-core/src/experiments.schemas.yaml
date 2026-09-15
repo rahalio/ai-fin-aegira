@@ -1,0 +1,94 @@
+openapi: 3.1.0
+info:
+  title: Aegira experiment schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    ExperimentId:
+      type: string
+      pattern: '^exp_[0-9A-HJKMNP-TV-Z]{26}$'
+    ModelVersionId:
+      type: string
+      pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$'
+    ChallengerExperiment:
+      type: object
+      required:
+        - experimentId
+        - challengerModelId
+        - trafficPct
+        - status
+        - criteria
+        - createdAt
+      properties:
+        experimentId:
+          $ref: '#/components/schemas/ExperimentId'
+        challengerModelId:
+          $ref: '#/components/schemas/ModelVersionId'
+        trafficPct:
+          type: number
+        status:
+          type: string
+          enum: [running, completed, aborted]
+        liftSummary:
+          type: string
+        precisionDelta:
+          type: number
+        falsePositiveDelta:
+          type: number
+        criteria:
+          type: object
+          required: [minPrecisionLift, maxFpIncrease]
+          properties:
+            minPrecisionLift:
+              type: number
+            maxFpIncrease:
+              type: number
+            met:
+              type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ChallengerExperimentCreate:
+      type: object
+      required: [challengerModelId, trafficPct]
+      properties:
+        challengerModelId:
+          $ref: '#/components/schemas/ModelVersionId'
+        trafficPct:
+          type: number
+          minimum: 0
+          maximum: 100
+        minPrecisionLift:
+          type: number
+        maxFpIncrease:
+          type: number
+    ChallengerExperimentResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ChallengerExperiment'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ChallengerExperimentListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChallengerExperiment'
+        nextCursor:
+          type: string
+    ChallengerExperimentListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ChallengerExperimentListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

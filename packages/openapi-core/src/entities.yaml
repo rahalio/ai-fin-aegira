@@ -1,0 +1,88 @@
+openapi: 3.1.0
+info:
+  title: Aegira Entities API
+  version: 0.1.0
+  description: Bounded device/payee/merchant graph hops without unconstrained PII browse (BR-8).
+  x-domain: ent
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Entities
+paths:
+  /v1/cases/{caseId}/entities:
+    get:
+      operationId: listCaseEntities
+      tags: [Entities]
+      x-repository: EntityLink
+      x-dynamodb:
+        entityType: ENTITY_LINK
+        pkPatternTemplate: "CASE#${caseId}"
+        skPatternTemplate: "ENT#${entityLinkId}"
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: ./entities.schemas.yaml#/components/schemas/CaseId
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Entity links
+          content:
+            application/json:
+              schema:
+                $ref: ./entities.schemas.yaml#/components/schemas/EntityLinkListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/entities/{entityLinkId}/hops:
+    get:
+      operationId: listEntityHops
+      tags: [Entities]
+      x-repository: EntityHop
+      x-dynamodb:
+        entityType: ENTITY_HOP
+        pkPatternTemplate: "ENT#${entityLinkId}"
+        skPatternTemplate: HOPS
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: entityLinkId
+          in: path
+          required: true
+          schema:
+            $ref: ./entities.schemas.yaml#/components/schemas/EntityLinkId
+      responses:
+        '200':
+          description: Bounded hops remaining
+          content:
+            application/json:
+              schema:
+                $ref: ./entities.schemas.yaml#/components/schemas/EntityHopResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

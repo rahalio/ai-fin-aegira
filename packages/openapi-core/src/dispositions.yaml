@@ -1,0 +1,131 @@
+openapi: 3.1.0
+info:
+  title: Aegira Dispositions API
+  version: 0.1.0
+  description: Labelled investigator outcomes for supervised retrain (BR-4).
+  x-domain: dsp
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.aegira.local
+security:
+  - apiKey: []
+  - bearerAuth: []
+tags:
+  - name: Dispositions
+paths:
+  /v1/cases/{caseId}/dispositions:
+    get:
+      operationId: listDispositions
+      tags: [Dispositions]
+      x-repository: Disposition
+      x-dynamodb:
+        entityType: DISPOSITION
+        pkPatternTemplate: "CASE#${caseId}"
+        skPatternTemplate: "DISP#${dispositionId}"
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: ./dispositions.schemas.yaml#/components/schemas/CaseId
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Dispositions
+          content:
+            application/json:
+              schema:
+                $ref: ./dispositions.schemas.yaml#/components/schemas/DispositionListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createDisposition
+      tags: [Dispositions]
+      x-repository: Disposition
+      x-dynamodb:
+        entityType: DISPOSITION
+        pkPatternTemplate: "CASE#${caseId}"
+        skPatternTemplate: "DISP#${dispositionId}"
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: ./dispositions.schemas.yaml#/components/schemas/CaseId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./dispositions.schemas.yaml#/components/schemas/DispositionCreate
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ./dispositions.schemas.yaml#/components/schemas/DispositionResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '409':
+          $ref: ./common/responses.yaml#/components/responses/Conflict
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/dispositions/{dispositionId}/undo:
+    post:
+      operationId: undoDisposition
+      tags: [Dispositions]
+      x-repository: Disposition
+      x-dynamodb:
+        entityType: DISPOSITION
+        pkPatternTemplate: "DISP#${dispositionId}"
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+        - name: dispositionId
+          in: path
+          required: true
+          schema:
+            $ref: ./dispositions.schemas.yaml#/components/schemas/DispositionId
+      responses:
+        '200':
+          description: Undone if still in lock window
+          content:
+            application/json:
+              schema:
+                $ref: ./dispositions.schemas.yaml#/components/schemas/DispositionResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        '409':
+          $ref: ./common/responses.yaml#/components/responses/Conflict
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

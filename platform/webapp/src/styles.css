@@ -1,0 +1,105 @@
+:root {
+  --color-ink: #e6edf2;
+  --color-charcoal-950: #0a0e12;
+  --color-charcoal-900: #141a22;
+  --color-charcoal-700: #2c3848;
+  --color-signal-red: #e24b4b;
+  --color-sodium: #f0a202;
+  --color-mint: #3cb371;
+  --color-steel: #8aa0b4;
+  --color-brand: #7eb8a8;
+  --font-display: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  background: var(--color-charcoal-950);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  background-image:
+    radial-gradient(1200px 600px at -10% -20%, rgba(126, 184, 168, 0.08), transparent 50%),
+    linear-gradient(180deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: auto, 8px 8px;
+}
+
+a { color: var(--color-brand); text-decoration: none; }
+button, input, select, textarea { font-family: inherit; }
+button {
+  background: var(--color-charcoal-700);
+  color: var(--color-ink);
+  border: 1px solid var(--color-charcoal-700);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+button.primary { background: var(--color-brand); color: #0a0e12; border-color: var(--color-brand); }
+button.danger { background: var(--color-signal-red); color: #fff; border-color: var(--color-signal-red); }
+button.sodium { background: var(--color-sodium); color: #0a0e12; border-color: var(--color-sodium); }
+
+.shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100%; }
+.nav {
+  background: var(--color-charcoal-900);
+  border-right: 1px solid var(--color-charcoal-700);
+  padding: var(--space-4);
+}
+.nav .brand {
+  color: var(--color-brand);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-6);
+}
+.nav a { display: block; color: var(--color-steel); padding: 8px 0; }
+.nav a.active { color: var(--color-ink); }
+.main { padding: var(--space-6); }
+.page-title { font-size: 22px; margin: 0 0 var(--space-4); }
+.mono { font-family: var(--font-mono); }
+.panel {
+  background: var(--color-charcoal-900);
+  border: 1px solid var(--color-charcoal-700);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--color-charcoal-700); font-size: 14px; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; background: var(--color-charcoal-700); }
+.chip.mint { color: var(--color-mint); }
+.chip.red { color: var(--color-signal-red); }
+.chip.sodium { color: var(--color-sodium); animation: slaPulse 220ms ease-in-out infinite alternate; }
+@keyframes slaPulse { from { opacity: 0.7; } to { opacity: 1; } }
+.banner { padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: var(--space-4); }
+.banner.red { background: rgba(226,75,75,0.15); color: var(--color-signal-red); }
+.banner.sodium { background: rgba(240,162,2,0.12); color: var(--color-sodium); }
+.login {
+  max-width: 420px;
+  margin: 12vh auto;
+  padding: var(--space-8);
+  background: var(--color-charcoal-900);
+  border: 1px solid var(--color-charcoal-700);
+  border-radius: var(--radius-md);
+}
+.login h1 { color: var(--color-brand); margin-top: 0; }
+label { display: block; color: var(--color-steel); font-size: 13px; margin-top: 12px; }
+input, select, textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px;
+  background: var(--color-charcoal-950);
+  color: var(--color-ink);
+  border: 1px solid var(--color-charcoal-700);
+  border-radius: var(--radius-sm);
+}
+.row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.kpi .n { font-size: 28px; font-weight: 600; }
+.error { color: var(--color-signal-red); }
